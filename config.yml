@@ -4,14 +4,4 @@
 proxy_version_2: true
 
 # 目标服务的端口号，反向代理会将请求转发到这个端口
-Forwarding_port: 80
-
-# 日志配置
-log_file: "/var/log/proxy.log"
-log_level: "INFO"
-
-# 目标服务的基本 URL
-target_url: "http://localhost"
-
-# 请求超时配置（秒）
-timeout: 10
+Forwarding_port: 8080

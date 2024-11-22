@@ -35,15 +35,17 @@ def before_request():
             client_ip = forwarded_for.split(',')[0]
             logger.info(f"客户端真实IP: {client_ip}")
 
-def forward_request(method, url, headers, data=None, params=None):
+def forward_request(method, url, headers, data=None, params=None, files=None):
     try:
-        # 根据传入的请求数据格式，设置合适的请求体
-        if isinstance(data, dict):
-            data = requests.models.json.dumps(data)  # 转换为 JSON 字符串，确保 Content-Type 为 application/json
-            headers['Content-Type'] = 'application/json'
+        # 如果有文件，使用 files 参数发送文件
+        if files:
+            response = requests.request(
+                method, url, headers=headers, data=data, params=params, files=files
+            )
+        else:
+            # 否则，发送普通请求
+            response = requests.request(method, url, headers=headers, data=data, params=params)
         
-        # 使用 requests.request 支持所有请求方法
-        response = requests.request(method, url, headers=headers, data=data, params=params)
         return Response(response.content, status=response.status_code, headers=dict(response.headers))
     except requests.RequestException as e:
         logger.error(f"请求转发失败: {e}")
@@ -78,23 +80,6 @@ def proxy(path):
     
     # 转发请求
     return forward_request(request.method, url, headers, data, params=request.args, files=files)
-
-def forward_request(method, url, headers, data=None, params=None, files=None):
-    try:
-        # 如果有文件，使用 files 参数发送文件
-        if files:
-            response = requests.request(
-                method, url, headers=headers, data=data, params=params, files=files
-            )
-        else:
-            # 否则，发送普通请求
-            response = requests.request(method, url, headers=headers, data=data, params=params)
-        
-        return Response(response.content, status=response.status_code, headers=dict(response.headers))
-    except requests.RequestException as e:
-        logger.error(f"请求转发失败: {e}")
-        return Response("请求转发失败", status=502)
-
 
 if __name__ == '__main__':
     app.wsgi_app = ProxyFix(app.wsgi_app)
